@@ -3,6 +3,13 @@
 
 A tic-tac-toe library that supports different sizes and dimensions and how many marks in a row to win.
 
+Installing
+----------
+
+Download and install the latest release:
+
+    pip install python-tictactoe
+
 ## Features
 
 * Different board sizes
