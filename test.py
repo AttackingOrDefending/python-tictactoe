@@ -1,4 +1,5 @@
-from tictactoe import Board
+from tictactoe import Board, Move
+import numpy
 
 
 def draw_board():
@@ -60,5 +61,34 @@ def test_result():
     assert unfinished_board().result() is None
 
 
+def test_copy():
+    board = unfinished_board()
+    assert board.possible_moves().tolist() == board.copy().possible_moves().tolist()
+
+
+def test_inbound_outofbounds():
+    board = unfinished_board()
+    assert board.in_bounds(numpy.array([2, 2]))
+    assert board.out_of_bounds(numpy.array([3, 2]))
+
+
+def test_move():
+    assert Move((2, 2)).str_move == '2-2'
+    assert Move(str_move='1-2').coordinate_move == (1, 2)
+
+
+def test_illegal_move():
+    board = unfinished_board()
+    try:
+        board.push((0, 0))
+        assert False
+    except ValueError:
+        assert True
+
+
 if __name__ == "__main__":
     test_result()
+    test_copy()
+    test_inbound_outofbounds()
+    test_move()
+    test_illegal_move()
