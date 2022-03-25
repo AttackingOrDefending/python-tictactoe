@@ -12,6 +12,8 @@ Download and install the latest release:
 
 ## Features
 
+* Includes mypy typings.
+
 * Different board sizes
 ```python
 from tictactoe import Board
