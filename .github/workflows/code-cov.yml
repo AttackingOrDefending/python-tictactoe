@@ -20,7 +20,7 @@ jobs:
     - name: Generate Report
       run: |
         pip install pytest pytest-cov numpy
-        pytest test.py --cov=tictactoe --cov-report=xml
+        pytest --cov=tictactoe --cov-report=xml
         coverage report --show-missing
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
