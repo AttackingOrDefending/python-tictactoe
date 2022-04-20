@@ -109,9 +109,11 @@ class Reader:
         logger.debug(f"Opening {name}.")
         all_positions = ""
         with open(name, "rb") as file:
-            while byte := file.read(1):
+            byte = file.read(1)
+            while byte != "":
                 position_int = int.from_bytes(byte, "little", signed=False)
                 all_positions += bin(position_int)[2:].zfill(8)
+                byte = file.read(1)
         positions = [all_positions[i:i + number_of_bits] for i in range(0, len(all_positions), number_of_bits)]
         if positions and len(positions[-1]) != number_of_bits:
             positions.pop(-1)
