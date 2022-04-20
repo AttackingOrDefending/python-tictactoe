@@ -110,7 +110,7 @@ class Reader:
         all_positions = ""
         with open(name, "rb") as file:
             byte = file.read(1)
-            while byte != "":
+            while byte:
                 position_int = int.from_bytes(byte, "little", signed=False)
                 all_positions += bin(position_int)[2:].zfill(8)
                 byte = file.read(1)
