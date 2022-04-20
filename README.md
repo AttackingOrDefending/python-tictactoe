@@ -32,6 +32,27 @@ from tictactoe import Board
 
 board = Board(dimensions=(10, 10, 10), x_in_a_row=8)
 ```
+* Generate endgame tablebases
+```python
+from tictactoe.egtb import Generator
+import functools, operator
+
+dimensions = (4, 3)
+total_squares = functools.reduce(operator.mul, dimensions)
+for index in reversed(range(total_squares + 1)):
+    Generator(dimensions, 3, index)
+```
+* Read endgame tablebases
+```python
+from tictactoe.egtb import Reader
+from tictactoe import Board
+
+reader = Reader((3, 3), 3, 2)
+board = Board((3, 3), 3)
+board.push((0, 0))
+board.push((0, 1))
+print(reader.index(board))
+```
 
 ## License
 python-tictactoe is licensed under the MIT License. Check out LICENSE for the full text.
