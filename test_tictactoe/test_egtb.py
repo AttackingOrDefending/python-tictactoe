@@ -3,7 +3,7 @@ import tictactoe
 
 
 def test_egtb():
-    # Generate egtbs.
+    # Generate EGTBs.
     two_piece_hash = None
     for index in reversed(range(10)):
         egtb_hash = Generator((3, 3), 3, index).correct_hash
@@ -17,4 +17,11 @@ def test_egtb():
     assert reader.index(board) == tictactoe.X
 
     # Incorrect hash.
-    Reader((3, 3), 3, 2, two_piece_hash[:-1] + "0")
+    with open("3_3-3-2.ttb", "rb") as file:
+        file_bytes = file.read()
+    incorrect_file_bytes = file_bytes[:-1] + b"\x81"
+    with open("3_3-3-2.ttb", "wb") as file:
+        file.write(incorrect_file_bytes)
+    Reader((3, 3), 3, 2, two_piece_hash)
+    with open("3_3-3-2.ttb", "wb") as file:
+        file.write(file_bytes)
