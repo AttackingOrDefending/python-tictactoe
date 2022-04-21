@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import List, Tuple, Iterable, Optional, Union
 
-_all_numpy_int_types = Union[np.int8, np.int16, np.int32, np.int64, np.int128]
+_all_numpy_int_types = Union[np.int8, np.int16, np.int32, np.int64]
 
 X = 1
 O = 2
