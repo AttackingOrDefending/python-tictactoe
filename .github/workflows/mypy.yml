@@ -11,5 +11,5 @@ jobs:
       with:
         python-version: "3.10"
     - run: pip install --upgrade pip
-    - run: pip install mypy
+    - run: pip install numpy mypy
     - run: mypy --strict $(git ls-files 'tictactoe/*.py')
