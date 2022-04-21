@@ -16,7 +16,7 @@ Download and install the latest release:
 
 ## Features
 
-* Includes strict mypy typings.
+* Includes mypy typings.
 
 * Different board sizes
 ```python
