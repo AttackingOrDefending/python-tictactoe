@@ -2,7 +2,8 @@ from __future__ import annotations
 import itertools
 import functools
 import tictactoe
-import numpy
+import numpy as np
+import numpy.typing as npt
 import operator
 import re
 import hashlib
@@ -48,9 +49,9 @@ class Generator:
         empty_squares = total_squares - self.pieces
         number_of_x = self.pieces // 2 + self.pieces % 2
         number_of_o = self.pieces // 2
-        initial_board = numpy.array([tictactoe.X] * number_of_x + [tictactoe.O] * number_of_o + [0] * empty_squares)
+        initial_board: npt.NDArray[np.int8] = np.array([tictactoe.X] * number_of_x + [tictactoe.O] * number_of_o + [0] * empty_squares, dtype=np.int8)
         for permutation in set(itertools.permutations(initial_board)):
-            numpy_board = numpy.array(permutation).reshape(self.dimensions)
+            numpy_board: npt.NDArray[np.int8] = np.array(permutation, dtype=np.int8).reshape(self.dimensions)
             board = tictactoe.Board(self.dimensions, self.x_in_a_row)
             board.board = numpy_board
             board.turn = tictactoe.X if number_of_x == number_of_o else tictactoe.O

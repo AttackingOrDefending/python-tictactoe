@@ -1,7 +1,10 @@
 from __future__ import annotations
 import itertools
-import numpy
-from typing import List, Tuple, Iterable, Optional
+import numpy as np
+import numpy.typing as npt
+from typing import List, Tuple, Iterable, Optional, Union
+
+_all_numpy_int_types = Union[np.int8, np.int16, np.int32, np.int64]
 
 X = 1
 O = 2
@@ -19,8 +22,8 @@ class Board:
         self.o: List[Move] = []
         self.turn = X
 
-    def create_board(self) -> numpy.ndarray:
-        return numpy.zeros(self.dimensions)
+    def create_board(self) -> npt.NDArray[np.int8]:
+        return np.zeros(self.dimensions, dtype=np.int8)
 
     def copy(self) -> Board:
         board = Board(self.dimensions, self.x_in_a_row)
@@ -30,7 +33,7 @@ class Board:
 
     def get_mark_at_position(self, position: Iterable[int]) -> int:
         position = tuple(position)
-        return self.board[position]
+        return int(self.board[position])
 
     def set_mark(self, coordinates: Tuple[int, ...], player: int) -> None:
         self.board[coordinates] = player
@@ -39,7 +42,7 @@ class Board:
         else:
             self.o.append(Move(coordinates))
 
-    def is_empty(self, position):
+    def is_empty(self, position: Tuple[int, ...]) -> bool:
         return self.get_mark_at_position(position) == 0
 
     def push(self, coordinates: Iterable[int]) -> None:
@@ -64,21 +67,21 @@ class Board:
                     break
         return correct_directions
 
-    def possible_moves(self) -> numpy.ndarray:
-        return numpy.argwhere(self.board == 0)
+    def possible_moves(self) -> npt.NDArray[np.int64]:
+        return np.argwhere(self.board == 0)
 
-    def out_of_bounds(self, pos: numpy.ndarray) -> numpy.bool_:
+    def out_of_bounds(self, pos: npt.NDArray[_all_numpy_int_types]) -> np.bool_:
         return (pos < 0).any() or (pos >= self.dimensions).any()
 
-    def in_bounds(self, pos: numpy.ndarray) -> bool:
+    def in_bounds(self, pos: npt.NDArray[_all_numpy_int_types]) -> bool:
         return not self.out_of_bounds(pos)
 
     def has_won(self, player: int) -> bool:
-        positions = numpy.argwhere(self.board == player)
+        positions = np.argwhere(self.board == player)
         for position in positions:
             for direction in self._directions:
                 for in_a_row in range(1, self.x_in_a_row):
-                    pos = position + numpy.multiply(direction, in_a_row)
+                    pos = position + np.multiply(direction, in_a_row)
                     if self.out_of_bounds(pos) or self.board[tuple(pos)] != player:
                         break
                 else:
