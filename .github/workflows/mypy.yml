@@ -6,11 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Mypy
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - name: Setup Python
+      uses: actions/setup-python@v3
       with:
         python-version: "3.10"
-    - run: |
+    - name: Install dependencies
+      run: |
         pip install --upgrade pip
-        pip install numpy mypy
+        pip install numpy
+        pip install mypy
+    - name: Mypy
         mypy --strict tictactoe
