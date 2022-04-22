@@ -17,4 +17,4 @@ jobs:
         pip install numpy
         pip install mypy
     - name: Mypy
-        mypy --strict tictactoe
+      run:  mypy --strict tictactoe
