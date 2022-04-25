@@ -5,6 +5,7 @@ import numpy.typing as npt
 from typing import List, Tuple, Iterable, Optional, Union
 
 __author__ = "AttackingOrDefending"
+__copyright__ = "2022, " + __author__
 __version__ = "0.0.5"
 
 
