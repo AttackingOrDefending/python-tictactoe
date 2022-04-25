@@ -86,6 +86,21 @@ def test_illegal_move():
         assert True
 
 
+def test_x_and_o_won():
+    board = Board()
+    board.push((0, 0))
+    board.push((1, 0))
+    board.push((0, 1))
+    board.push((1, 1))
+    board.push((0, 2))
+    board.push((1, 2))
+    try:
+        board.result()
+        assert False
+    except:
+        assert True
+
+
 if __name__ == "__main__":
     test_result()
     test_copy()
