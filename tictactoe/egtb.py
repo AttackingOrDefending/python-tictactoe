@@ -7,7 +7,7 @@ import numpy.typing as npt
 import operator
 import re
 import hashlib
-from typing import Tuple, List, Dict, Optional
+from typing import Iterable, List, Dict, Optional
 import logging
 
 logger = logging.getLogger("tictactoe")
@@ -17,8 +17,14 @@ EGTB_O = 1
 
 
 class Generator:
-    def __init__(self, dimensions: Tuple[int, ...] = (3, 3), x_in_a_row: int = 3, pieces: int = 9) -> None:
-        self.dimensions = dimensions
+    def __init__(self, dimensions: Iterable[int] = (3, 3), x_in_a_row: int = 3, pieces: int = 9) -> None:
+        """
+        Generate EGTB.
+        :param dimensions: The dimensions of the board.
+        :param x_in_a_row: How many marks in a row are needed to win.
+        :param pieces: How many pieces are placed in the board.
+        """
+        self.dimensions = tuple(dimensions)
         self.x_in_a_row = x_in_a_row
         self.pieces = pieces
         self.results: List[str] = []
@@ -27,6 +33,10 @@ class Generator:
         self.correct_hash = self.save_results()
 
     def save_results(self) -> str:
+        """
+        Save the EGTB.
+        :return: The sha256 checksum of the contents of the EGTB file.
+        """
         logger.debug(f"Saving the EGTB.")
         name = f"{'_'.join(map(str, self.dimensions))}-{self.x_in_a_row}-{self.pieces}.ttb"
         with open(name, "wb") as file:
@@ -40,10 +50,17 @@ class Generator:
         return sha256_hash
 
     def open_previous_egtb(self) -> Reader:
+        """
+        Open the EGTB with one more move played.
+        :return: A `tictactoe.egtb.Reader` object to index the EGTB.
+        """
         logger.debug(f"Opening previous EGTB (pieces = {self.pieces + 1}).")
         return Reader(self.dimensions, self.x_in_a_row, self.pieces + 1)
 
     def get_all_board(self) -> None:
+        """
+        Generate the EGTB.
+        """
         logger.debug(f"Generating the EGTB.")
         total_squares = functools.reduce(operator.mul, self.dimensions)
         empty_squares = total_squares - self.pieces
@@ -91,8 +108,15 @@ class Generator:
 
 
 class Reader:
-    def __init__(self, dimensions: Tuple[int, ...] = (3, 3), x_in_a_row: int = 3, pieces: int = 9, verification_hash: Optional[str] = None) -> None:
-        self.dimensions = dimensions
+    def __init__(self, dimensions: Iterable[int] = (3, 3), x_in_a_row: int = 3, pieces: int = 9, verification_hash: Optional[str] = None) -> None:
+        """
+        Read an EGTB file.
+        :param dimensions: The dimensions of the board.
+        :param x_in_a_row: How many marks in a row are needed to win.
+        :param pieces: How many pieces are placed in the board.
+        :param verification_hash: The sha256 checksum of the file to verify that the file is not corrupted.
+        """
+        self.dimensions = tuple(dimensions)
         self.x_in_a_row = x_in_a_row
         self.pieces = pieces
         self.verification_hash = verification_hash
@@ -100,6 +124,9 @@ class Reader:
         self.read()
 
     def read(self) -> None:
+        """
+        Read the EGTB file.
+        """
         total_squares = functools.reduce(operator.mul, self.dimensions)
         number_of_bits = total_squares * 2 + 1
         if self.pieces > total_squares or self.pieces < 0:
@@ -125,6 +152,9 @@ class Reader:
         logger.debug(f"Completed reading {name}.")
 
     def verify(self) -> None:
+        """
+        Verify that the EGTB is not corrupt, by checking the sha256 checksum.
+        """
         if not self.verification_hash:
             return
         logger.debug("Verifying EGTB.")
@@ -138,6 +168,11 @@ class Reader:
             logger.debug("EGTB has no errors.")
 
     def index(self, board: tictactoe.Board) -> int:
+        """
+        Get the result of a position.
+        :param board: A `tictactoe.Board` object to get the result of the position.
+        :return: The result of the position.
+        """
         flattened_board = board.board.flatten()
         conversion_dict = {0: "00", 1: "01", 2: "10"}
         fen = "".join(map(lambda piece: conversion_dict[piece], flattened_board))
