@@ -97,7 +97,7 @@ def test_x_and_o_won():
     try:
         board.result()
         assert False
-    except:
+    except Exception:
         assert True
 
 
