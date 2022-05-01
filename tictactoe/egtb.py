@@ -37,7 +37,7 @@ class Generator:
         Save the EGTB.
         :return: The sha256 checksum of the contents of the EGTB file.
         """
-        logger.debug(f"Saving the EGTB.")
+        logger.debug("Saving the EGTB.")
         name = f"{'_'.join(map(str, self.dimensions))}-{self.x_in_a_row}-{self.pieces}.ttb"
         with open(name, "wb") as file:
             for eight_bits in re.findall(r"\d{1,8}", "".join(self.results)):
@@ -61,7 +61,7 @@ class Generator:
         """
         Generate the EGTB.
         """
-        logger.debug(f"Generating the EGTB.")
+        logger.debug("Generating the EGTB.")
         total_squares = functools.reduce(operator.mul, self.dimensions)
         empty_squares = total_squares - self.pieces
         number_of_x = self.pieces // 2 + self.pieces % 2
