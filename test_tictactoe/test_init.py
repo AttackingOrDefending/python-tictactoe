@@ -101,9 +101,31 @@ def test_x_and_o_won():
         assert True
 
 
+def test_repr():
+    board = Board((2, 2, 2), 2)
+    board.push((0, 0, 0))
+    board.push((0, 1, 0))
+    board.push((0, 0, 1))
+    board.push((1, 1, 0))
+    board.push((1, 0, 1))
+    board.push((1, 0, 0))
+    board.push((1, 1, 1))
+
+    correct_repr = """ X | O 
+-------
+ O | O 
+-------
+-------
+ X | X 
+-------
+   | X """
+    assert correct_repr == str(board)
+
+
 if __name__ == "__main__":
     test_result()
     test_copy()
     test_inbound_outofbounds()
     test_move()
     test_illegal_move()
+    test_repr()

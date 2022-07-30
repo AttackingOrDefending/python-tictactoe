@@ -36,6 +36,26 @@ from tictactoe import Board
 
 board = Board(dimensions=(10, 10, 10), x_in_a_row=8)
 ```
+* See the board
+```python
+from tictactoe import Board
+
+board = Board(dimensions=(2, 2, 2), x_in_a_row=2)
+board.push((0, 0, 0))
+board.push((0, 1, 0))
+print(board)
+
+"""
+ X |   
+-------
+ O |   
+-------
+-------
+   |   
+-------
+   |   
+"""
+```
 * Generate endgame tablebases
 ```python
 from tictactoe.egtb import Generator

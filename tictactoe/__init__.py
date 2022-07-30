@@ -6,7 +6,7 @@ from typing import List, Tuple, Iterable, Optional, Union
 
 __author__ = "AttackingOrDefending"
 __copyright__ = "2022, " + __author__
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 
 _all_numpy_int_types = Union[np.int8, np.int16, np.int32, np.int64]
@@ -164,6 +164,26 @@ class Board:
         elif self.board.all():
             return 0
         return None
+
+    def _get_dimension_repr(self, board_partition):
+        if len(board_partition.shape) > 1:
+            board_repr = ""
+            divider = ((board_partition.shape[0] * 4 - 1) * "-" + "\n") * (len(board_partition.shape) - 1)
+            for board_partition_index in range(board_partition.shape[-1]):
+                board_repr += self._get_dimension_repr(board_partition[..., board_partition_index]) + "\n"
+                board_repr += divider
+            board_repr = board_repr[:-(len(divider) + 1)]
+            return board_repr
+        else:
+            row = ""
+            for item in board_partition:
+                mark = "O" if item == O else ("X" if item == X else " ")
+                row += f" {mark} |"
+            row = row[:-1]
+            return row
+
+    def __repr__(self):
+        return self._get_dimension_repr(self.board)
 
 
 class Move:
