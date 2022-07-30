@@ -166,6 +166,11 @@ class Board:
         return None
 
     def _get_dimension_repr(self, board_partition: npt.NDArray[np.int8]) -> str:
+        """
+        Get a visual representation of a part of the board.
+        :param board_partition: A part of the board.
+        :return: A visual representation of a part of the board.
+        """
         if len(board_partition.shape) > 1:
             board_repr = ""
             divider = ((board_partition.shape[0] * 4 - 1) * "-" + "\n") * (len(board_partition.shape) - 1)
@@ -183,6 +188,10 @@ class Board:
             return row
 
     def __repr__(self) -> str:
+        """
+        Get a visual representation of the board.
+        :return: A visual representation of the board.
+        """
         return self._get_dimension_repr(self.board)
 
 
