@@ -6,7 +6,7 @@ from typing import List, Tuple, Iterable, Optional, Union
 
 __author__ = "AttackingOrDefending"
 __copyright__ = "2022, " + __author__
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 
 _all_numpy_int_types = Union[np.int8, np.int16, np.int32, np.int64]
