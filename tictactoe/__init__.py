@@ -165,7 +165,7 @@ class Board:
             return 0
         return None
 
-    def _get_dimension_repr(self, board_partition):
+    def _get_dimension_repr(self, board_partition: npt.NDArray[np.int8]) -> str:
         if len(board_partition.shape) > 1:
             board_repr = ""
             divider = ((board_partition.shape[0] * 4 - 1) * "-" + "\n") * (len(board_partition.shape) - 1)
@@ -182,7 +182,7 @@ class Board:
             row = row[:-1]
             return row
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._get_dimension_repr(self.board)
 
 
