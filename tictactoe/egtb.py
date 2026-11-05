@@ -1,186 +1,190 @@
+"""Endgame tablebases: who wins every position of a small board when both players play perfectly.
+
+A :class:`Tablebase` solves the whole game once, by working backwards from the full board (retrograde analysis), and
+then answers any position instantly. It holds one byte for each of the ``3 ** cells`` ways to fill the board, so it is
+meant for small boards: a 3x3 board takes about 20 KB and a few milliseconds, a 4x4 board 43 MB and a few seconds
+(with about 220 MB of memory in use while it is solved). Boards with more than :data:`MAX_CELLS` cells are refused.
+
+Example:
+    >>> from tictactoe import Board
+    >>> from tictactoe.egtb import Tablebase
+    >>> tablebase = Tablebase((3, 3), 3)
+    >>> tablebase.result(Board((3, 3), 3))  # Tic-tac-toe is a draw.
+    0
+"""
+
 from __future__ import annotations
-import itertools
-import functools
-import tictactoe
+
+import math
+import os
+from collections.abc import Iterable
+
 import numpy as np
 import numpy.typing as npt
-import operator
-import re
-import hashlib
-from typing import Iterable, List, Dict, Optional
-import logging
 
-logger = logging.getLogger("tictactoe")
+from tictactoe import Board, O, X, _winning_lines
 
-EGTB_X = 0
-EGTB_O = 1
+__all__ = ["MAX_CELLS", "Tablebase"]
+
+MAX_CELLS = 16
+"""The most cells a board can have to get a tablebase. A 4x4 board needs 43 MB; every extra cell triples that."""
 
 
-class Generator:
-    def __init__(self, dimensions: Iterable[int] = (3, 3), x_in_a_row: int = 3, pieces: int = 9) -> None:
-        """
-        Generate EGTB.
-        :param dimensions: The dimensions of the board.
-        :param x_in_a_row: How many marks in a row are needed to win.
-        :param pieces: How many pieces are placed in the board.
-        """
-        self.dimensions = tuple(dimensions)
-        self.x_in_a_row = x_in_a_row
-        self.pieces = pieces
-        self.results: List[str] = []
-        self.previous_egtb = self.open_previous_egtb()
-        self.get_all_board()
-        self.correct_hash = self.save_results()
+class Tablebase:
+    """The perfect-play result of every position of a board.
 
-    def save_results(self) -> str:
-        """
-        Save the EGTB.
-        :return: The sha256 checksum of the contents of the EGTB file.
-        """
-        logger.debug("Saving the EGTB.")
-        name = f"{'_'.join(map(str, self.dimensions))}-{self.x_in_a_row}-{self.pieces}.ttb"
-        with open(name, "wb") as file:
-            for eight_bits in re.findall(r"\d{1,8}", "".join(self.results)):
-                eight_bits = eight_bits + (8 - len(eight_bits)) * "0"
-                file.write(int.to_bytes(int(eight_bits, 2), 1, "little", signed=False))
-        with open(name, "rb") as file:
-            file_bytes = file.read()
-            sha256_hash = hashlib.sha256(file_bytes).hexdigest()
-            logger.debug(f"The sha256 hash of {name} is {sha256_hash}.")
-        return sha256_hash
+    Results use the same values as :meth:`tictactoe.Board.result`: :data:`tictactoe.X` or :data:`tictactoe.O` if that
+    player wins and ``0`` for a draw. The result of a finished game is how it ended.
 
-    def open_previous_egtb(self) -> Reader:
-        """
-        Open the EGTB with one more move played.
-        :return: A `tictactoe.egtb.Reader` object to index the EGTB.
-        """
-        logger.debug(f"Opening previous EGTB (pieces = {self.pieces + 1}).")
-        return Reader(self.dimensions, self.x_in_a_row, self.pieces + 1)
+    Attributes:
+        dimensions: The size of the board along each axis.
+        x_in_a_row: How many marks in a row are needed to win.
+        table: The result of every position, indexed by the position's code: its cells read as the digits of a base 3
+            number. Positions that cannot come up in a game (for example, with more O's than X's) are ``0``.
+    """
 
-    def get_all_board(self) -> None:
+    def __init__(self, dimensions: Iterable[int] = (3, 3), x_in_a_row: int = 3) -> None:
+        """Solve every position of a board.
+
+        Args:
+            dimensions: The size of the board along each axis.
+            x_in_a_row: How many marks in a row are needed to win.
+
+        Raises:
+            ValueError: If the board has more than :data:`MAX_CELLS` cells or `x_in_a_row` is smaller than 1.
         """
-        Generate the EGTB.
+        self.dimensions = tuple(int(size) for size in dimensions)
+        self.x_in_a_row = int(x_in_a_row)
+        if x_in_a_row < 1:
+            raise ValueError(f"x_in_a_row must be at least 1, not {x_in_a_row}.")
+        self.table = _solve(self.dimensions, self.x_in_a_row)
+
+    @classmethod
+    def load(cls, path: str | os.PathLike[str]) -> Tablebase:
+        """Load a tablebase saved with :meth:`save`.
+
+        Args:
+            path: The file to read.
+
+        Returns:
+            The tablebase.
         """
-        logger.debug("Generating the EGTB.")
-        total_squares = functools.reduce(operator.mul, self.dimensions)
-        empty_squares = total_squares - self.pieces
-        number_of_x = self.pieces // 2 + self.pieces % 2
-        number_of_o = self.pieces // 2
-        initial_board: npt.NDArray[np.int8] = np.array([tictactoe.X] * number_of_x + [tictactoe.O] * number_of_o + [0] * empty_squares, dtype=np.int8)
-        for permutation in set(itertools.permutations(initial_board)):
-            numpy_board: npt.NDArray[np.int8] = np.array(permutation, dtype=np.int8).reshape(self.dimensions)
-            board = tictactoe.Board(self.dimensions, self.x_in_a_row)
-            board.board = numpy_board
-            board.turn = tictactoe.X if number_of_x == number_of_o else tictactoe.O
-            has_x_won = board.has_won(tictactoe.X)
-            has_o_won = board.has_won(tictactoe.O)
-            if has_x_won and has_o_won:
-                continue
-            flattened_board = board.board.flatten()
-            conversion_dict = {0: "00", 1: "01", 2: "10"}
-            fen = "".join(map(lambda piece: conversion_dict[piece], flattened_board))
-            if has_x_won:
-                result = f"{fen}{EGTB_X}"
-                self.results.append(result)
-            elif has_o_won:
-                result = f"{fen}{EGTB_O}"
-                self.results.append(result)
-            elif empty_squares == 0:
-                continue
-            else:
-                best_score = None
-                scores = []
-                for move in board.possible_moves():
-                    board_copy = board.copy()
-                    board_copy.push(move)
-                    score = self.previous_egtb.index(board_copy)
-                    if board.turn == score:
-                        best_score = score
-                        break
-                    scores.append(score)
-                else:
-                    if 0 not in scores:
-                        best_score = tictactoe.X if board.turn == tictactoe.O else tictactoe.O
-                if best_score:
-                    best_score = EGTB_X if best_score == tictactoe.X else EGTB_O
-                    result = f"{fen}{best_score}"
-                    self.results.append(result)
+        with np.load(path) as data:
+            tablebase = cls.__new__(cls)
+            tablebase.dimensions = tuple(int(size) for size in data["dimensions"])
+            tablebase.x_in_a_row = int(data["x_in_a_row"])
+            tablebase.table = data["table"]
+        if tablebase.table.shape != (3 ** math.prod(tablebase.dimensions),):
+            raise ValueError(f"{path} does not hold a tablebase for a board of size {tablebase.dimensions}.")
+        return tablebase
+
+    def save(self, path: str | os.PathLike[str]) -> None:
+        """Save the tablebase to a compressed ``.npz`` file.
+
+        Args:
+            path: The file to write. NumPy adds ``.npz`` to the name if it is missing.
+        """
+        np.savez_compressed(path, table=self.table, dimensions=self.dimensions, x_in_a_row=self.x_in_a_row)
+
+    def result(self, board: Board) -> int:
+        """Get who wins a position if both players play perfectly.
+
+        Args:
+            board: The position. Its size and :attr:`~tictactoe.Board.x_in_a_row` must match the tablebase's.
+
+        Returns:
+            :data:`tictactoe.X` or :data:`tictactoe.O` if that player wins and ``0`` for a draw.
+        """
+        self._check(board)
+        return int(self.table[_code(board.board)])
+
+    def best_moves(self, board: Board) -> npt.NDArray[np.intp]:
+        """Get every move that keeps the best result for the player to move.
+
+        Args:
+            board: The position. Its size and :attr:`~tictactoe.Board.x_in_a_row` must match the tablebase's.
+
+        Returns:
+            The coordinates of the best moves, one move per row, in the same format as
+            :meth:`tictactoe.Board.possible_moves`. Empty if the game is over.
+        """
+        self._check(board)
+        moves = board.possible_moves()
+        if board.result() is not None:
+            return moves[:0]
+        code = _code(board.board)
+        empty = board.board.reshape(-1) == 0
+        children = code + board.turn * _place_values(empty.size)[empty]
+        best: npt.NDArray[np.intp] = moves[self.table[children] == self.table[code]]
+        return best
+
+    def _check(self, board: Board) -> None:
+        """Raise a `ValueError` if the board is not one that this tablebase covers."""
+        if board.dimensions != self.dimensions or board.x_in_a_row != self.x_in_a_row:
+            raise ValueError(
+                f"This tablebase is for {self.dimensions} boards with {self.x_in_a_row} in a row, "
+                f"not {board.dimensions} boards with {board.x_in_a_row} in a row."
+            )
 
 
-class Reader:
-    def __init__(self, dimensions: Iterable[int] = (3, 3), x_in_a_row: int = 3, pieces: int = 9, verification_hash: Optional[str] = None) -> None:
-        """
-        Read an EGTB file.
-        :param dimensions: The dimensions of the board.
-        :param x_in_a_row: How many marks in a row are needed to win.
-        :param pieces: How many pieces are placed in the board.
-        :param verification_hash: The sha256 checksum of the file to verify that the file is not corrupted.
-        """
-        self.dimensions = tuple(dimensions)
-        self.x_in_a_row = x_in_a_row
-        self.pieces = pieces
-        self.verification_hash = verification_hash
-        self.ttb: Dict[str, int] = {}
-        self.read()
+def _place_values(cells: int) -> npt.NDArray[np.int64]:
+    """Get what a mark in each cell (in ``board.ravel()`` order) adds to a position's code."""
+    return 3 ** np.arange(cells - 1, -1, -1, dtype=np.int64)
 
-    def read(self) -> None:
-        """
-        Read the EGTB file.
-        """
-        total_squares = functools.reduce(operator.mul, self.dimensions)
-        number_of_bits = total_squares * 2 + 1
-        if self.pieces > total_squares or self.pieces < 0:
-            return
 
-        name = f"{'_'.join(map(str, self.dimensions))}-{self.x_in_a_row}-{self.pieces}.ttb"
-        self.verify()
-        logger.debug(f"Opening {name}.")
-        all_positions = ""
-        with open(name, "rb") as file:
-            byte = file.read(1)
-            while byte:
-                position_int = int.from_bytes(byte, "little", signed=False)
-                all_positions += bin(position_int)[2:].zfill(8)
-                byte = file.read(1)
-        positions = [all_positions[i:i + number_of_bits] for i in range(0, len(all_positions), number_of_bits)]
-        if positions and len(positions[-1]) != number_of_bits:
-            positions.pop(-1)
-        for position in positions:
-            result = int(position[-1])
-            bin_fen = position[:-1]
-            self.ttb[bin_fen] = result
-        logger.debug(f"Completed reading {name}.")
+def _code(board: npt.NDArray[np.int8]) -> int:
+    """Get a position's code: its cells read as the digits of a base 3 number."""
+    return int(board.reshape(-1) @ _place_values(board.size))
 
-    def verify(self) -> None:
-        """
-        Verify that the EGTB is not corrupt, by checking the sha256 checksum.
-        """
-        if not self.verification_hash:
-            return
-        logger.debug("Verifying EGTB.")
-        name = f"{'_'.join(map(str, self.dimensions))}-{self.x_in_a_row}-{self.pieces}.ttb"
-        with open(name, "rb") as file:
-            file_bytes = file.read()
-            sha256_hash = hashlib.sha256(file_bytes).hexdigest()
-        if sha256_hash != self.verification_hash:
-            logger.error(f"The calculated sha256 hash of {name} is {sha256_hash}, but the correct one is {self.verification_hash}.")
-        else:
-            logger.debug("EGTB has no errors.")
 
-    def index(self, board: tictactoe.Board) -> int:
-        """
-        Get the result of a position.
-        :param board: A `tictactoe.Board` object to get the result of the position.
-        :return: The result of the position.
-        """
-        flattened_board = board.board.flatten()
-        conversion_dict = {0: "00", 1: "01", 2: "10"}
-        fen = "".join(map(lambda piece: conversion_dict[piece], flattened_board))
-        result = self.ttb.get(fen)
-        if result == EGTB_X:
-            result = tictactoe.X
-        elif result == EGTB_O:
-            result = tictactoe.O
-        else:  # Draw
-            result = 0
-        return result
+def _legal_positions(cells: int) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.int8]]:
+    """Get the code and the number of marks of every position in which X has made as many moves as O, or one more.
+
+    Other positions can't come up in a game.
+    """
+    # How many marks every position has, and how many more of them are X's than O's, built up one cell at a time.
+    marks = lead = np.zeros(1, dtype=np.int8)
+    for _ in range(cells):
+        marks = (marks + np.array([[0], [1], [1]], dtype=np.int8)).ravel()
+        lead = (lead + np.array([[0], [1], [-1]], dtype=np.int8)).ravel()
+    codes = np.flatnonzero((lead == 0) | (lead == 1))
+    return codes, marks[codes]
+
+
+def _solve(dimensions: tuple[int, ...], x_in_a_row: int) -> npt.NDArray[np.int8]:
+    """Find the perfect-play result of every position by retrograde analysis.
+
+    Positions are solved in batches by how many marks they have, from the full board down to the empty one, so every
+    move leads to a position that is already solved.
+    """
+    cells = math.prod(dimensions)
+    if cells > MAX_CELLS:
+        raise ValueError(f"A board with {cells} cells is too big for a tablebase; the limit is {MAX_CELLS}.")
+    lines = _winning_lines(dimensions, x_in_a_row)
+    place_values = _place_values(cells)
+    all_codes, marks = _legal_positions(cells)
+
+    # Scores are from X's point of view: 1 if X wins, -1 if O wins and 0 for a draw.
+    scores = np.zeros(3**cells, dtype=np.int8)
+    for move_count in range(cells, -1, -1):
+        codes = all_codes[marks == move_count]
+        positions = np.empty((len(codes), cells), dtype=np.int8)
+        for cell, place_value in enumerate(place_values):
+            positions[:, cell] = codes // place_value % 3
+        x_won = np.zeros(len(codes), dtype=bool)
+        o_won = np.zeros(len(codes), dtype=bool)
+        for line in lines:
+            x_won |= (positions[:, line] == X).all(axis=1)
+            o_won |= (positions[:, line] == O).all(axis=1)
+
+        # The player to move picks the move with the best score for them. Here `best` is from their point of view.
+        player, sign = (X, 1) if move_count % 2 == 0 else (O, -1)
+        best = np.full(len(codes), -1, dtype=np.int8)
+        for cell, place_value in enumerate(place_values):
+            empty = positions[:, cell] == 0
+            best[empty] = np.maximum(best[empty], sign * scores[codes[empty] + player * place_value])
+
+        scores[codes] = np.select([x_won, o_won, positions.all(axis=1)], [1, -1, 0], sign * best)
+
+    # -1 indexes the last entry, so this maps 1 to X, -1 to O and 0 to 0.
+    return np.array([0, X, O], dtype=np.int8)[scores]
