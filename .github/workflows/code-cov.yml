@@ -4,23 +4,20 @@ on: [push, pull_request]
 
 jobs:
   run:
-    runs-on: windows-latest
-    env:
-      OS: windows-latest
-      PYTHON: '3.10'
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: ‘2’
-
+    - uses: actions/checkout@v7
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.10"
+        python-version: "3.15"
     - name: Generate Report
       run: |
-        pip install pytest pytest-cov numpy
-        pytest --cov=tictactoe --cov-report=xml
+        python -m pip install --upgrade pip
+        python -m pip install . --group test
+        pytest --cov --cov-report=xml
         coverage report --show-missing
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
