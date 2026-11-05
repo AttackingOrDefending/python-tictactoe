@@ -1,6 +1,76 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-tictactoe"
+dynamic = ["version"]
+description = "A tic-tac-toe library that supports different sizes and dimensions and how many marks in a row to win"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Ioannis Pantidis" }]
+requires-python = ">=3.11"
+dependencies = ["numpy>=2.0"]
+keywords = ["tic-tac-toe", "tictactoe", "game", "n-dimensional", "tablebase"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Games/Entertainment :: Turn Based Strategy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/AttackingOrDefending/python-tictactoe"
+Documentation = "https://attackingordefending.github.io/python-tictactoe/"
+Changelog = "https://github.com/AttackingOrDefending/python-tictactoe/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/AttackingOrDefending/python-tictactoe/issues"
+
+[dependency-groups]
+test = ["pytest>=8", "pytest-cov>=6"]
+lint = ["ruff>=0.14", "mypy>=1.18"]
+docs = ["sphinx>=8.2", "furo>=2025.9.25", "myst-parser>=4"]
+dev = [{ include-group = "test" }, { include-group = "lint" }, { include-group = "docs" }]
+
+[tool.setuptools]
+packages = ["tictactoe"]
+
+[tool.setuptools.dynamic]
+version = { attr = "tictactoe.__version__" }
+
+[tool.setuptools.package-data]
+tictactoe = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tictactoe", "test_tictactoe"]
+addopts = ["--doctest-modules"]
+
+[tool.coverage.run]
+source = ["tictactoe"]
+
+[tool.mypy]
+strict = true
+files = ["tictactoe"]
+
+[tool.ruff]
+line-length = 127
+extend-exclude = ["docs/_build", "try.py"]  # try.py is a local scratch file
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "NPY", "RUF", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"test_tictactoe/*" = ["D"]
+"docs/*" = ["D"]

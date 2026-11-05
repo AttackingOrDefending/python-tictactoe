@@ -1,3 +1,27 @@
 .venv
 .idea
 .gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Tool caches and reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Docs
+docs/_build/
+
+# Generated tablebases
+*.ttb
+*.npz
