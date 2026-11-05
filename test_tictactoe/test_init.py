@@ -1,3 +1,4 @@
+import functools
 import itertools
 import math
 import random
@@ -60,6 +61,7 @@ def unfinished_board():
     return board
 
 
+@functools.cache
 def reference_lines(dimensions, x_in_a_row):
     """Every line on the board, found by walking from every cell in every direction."""
     lines = set()
@@ -89,7 +91,32 @@ CONFIGURATIONS = [
     ((3, 3), 1),
     ((3, 3), 4),
     ((2, 5), 3),
+    ((3, 3, 3, 3), 3),
+    ((2, 2, 2, 2, 2), 2),
+    ((3, 3, 3, 3, 3), 3),
+    ((4, 2, 3, 2, 3), 3),
+    ((2, 2, 2, 2, 2, 2), 2),
+    ((3, 3, 3, 3), 1),
 ]
+
+
+@pytest.mark.parametrize(("size", "ndim"), [(3, d) for d in range(1, 9)] + [(4, d) for d in range(1, 6)] + [(5, 4)])
+def test_number_of_lines(size, ndim):
+    # A board with `size` cells along each of `ndim` axes and `size` in a row has ((size + 2)^ndim - size^ndim) / 2 lines.
+    board = Board((size,) * ndim, size)
+    assert len(board._lines) == ((size + 2) ** ndim - size**ndim) // 2
+    assert len({tuple(line) for line in board._lines.tolist()}) == len(board._lines)
+
+
+def test_4d_diagonal_win():
+    board = Board((3, 3, 3, 3), 3)
+    for player in (X, O):
+        assert not board.has_won(player)
+    for i in range(3):
+        board.set_mark((i, 2 - i, 2 - i, i), O)
+    assert board.has_won(O)
+    assert not board.has_won(X)
+    assert board.result() == O
 
 
 def test_result():

@@ -12,6 +12,7 @@ Example:
 from __future__ import annotations
 
 import functools
+import math
 from collections.abc import Iterable
 from typing import Self
 
@@ -55,17 +56,25 @@ def _winning_lines(dimensions: tuple[int, ...], x_in_a_row: int) -> npt.NDArray[
         A read-only array of shape ``(number_of_lines, x_in_a_row)``. It is cached, so every board with the same
         dimensions and `x_in_a_row` shares it.
     """
-    ndim = len(dimensions)
-    directions = _directions(ndim)
-    # The coordinates of every cell, in the same order as board.ravel(). Each is a possible start of a line.
-    starts = np.indices(dimensions).reshape(ndim, -1).T
-    # A line fits on the board when its last cell does.
-    ends = starts[:, np.newaxis, :] + (x_in_a_row - 1) * directions
-    start, direction = np.nonzero(((ends >= 0) & (ends < dimensions)).all(axis=2))
-    # How far one step in each direction moves through board.ravel().
-    strides = np.cumprod((*dimensions[1:], 1)[::-1])[::-1]
-    steps = directions @ strides
-    lines = start[:, np.newaxis] + steps[direction][:, np.newaxis] * np.arange(x_in_a_row)
+    cells = np.arange(math.prod(dimensions)).reshape(dimensions)
+    if x_in_a_row == 1:
+        lines = cells.reshape(-1, 1)  # Every cell is a line on its own, whatever the direction.
+    else:
+        # How far one step along each axis moves through board.ravel().
+        strides = np.array(cells.strides) // cells.itemsize
+        reach = x_in_a_row - 1
+        # One direction at a time, so memory use stays close to the size of the result even with many dimensions.
+        lines_by_direction = []
+        for direction in _directions(len(dimensions)):
+            # A line can start on any cell that is far enough from the edges it heads towards to fit on the board.
+            starts = cells[
+                tuple(
+                    slice(0, max(size - reach, 0)) if step > 0 else slice(reach, None) if step < 0 else slice(None)
+                    for size, step in zip(dimensions, direction, strict=True)
+                )
+            ]
+            lines_by_direction.append(starts.reshape(-1, 1) + (direction @ strides) * np.arange(x_in_a_row))
+        lines = np.concatenate(lines_by_direction)
     lines.flags.writeable = False
     return lines
 
