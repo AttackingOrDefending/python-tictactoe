@@ -3,14 +3,17 @@
 [![Tests](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/tests.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/tests.yml)
 [![Build](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/build.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/build.yml)
 [![Mypy](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/mypy.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/mypy.yml)
+[![Docs](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/docs.yml/badge.svg)](https://attackingordefending.github.io/python-tictactoe/)
 [![codecov](https://codecov.io/gh/AttackingOrDefending/python-tictactoe/branch/main/graph/badge.svg?token=7N5LHRA3OC)](https://codecov.io/gh/AttackingOrDefending/python-tictactoe)
 
 A tic-tac-toe library that supports different sizes and dimensions and how many marks in a row to win.
 
+**Documentation:** <https://attackingordefending.github.io/python-tictactoe/>
+
 Installing
 ----------
 
-Download and install the latest release:
+Download and install the latest release (Python 3.11 or newer):
 
     pip install python-tictactoe
 
@@ -36,6 +39,15 @@ from tictactoe import Board
 
 board = Board(dimensions=(10, 10, 10), x_in_a_row=8)
 ```
+* Play moves and get the result
+```python
+from tictactoe import Board
+
+board = Board()
+for move in [(0, 0), (1, 0), (0, 1), (1, 1), (0, 2)]:
+    board.push(move)
+print(board.result())  # 1, because X has won. 2 means O won, 0 a draw and None that the game is not over.
+```
 * See the board
 ```python
 from tictactoe import Board
@@ -56,27 +68,31 @@ print(board)
    |   
 """
 ```
-* Generate endgame tablebases
+* Endgame tablebases: the perfect-play result and the best moves of every position, for boards with up to 16 cells
 ```python
-from tictactoe.egtb import Generator
-import functools, operator
-
-dimensions = (4, 3)
-total_squares = functools.reduce(operator.mul, dimensions)
-for index in reversed(range(total_squares + 1)):
-    Generator(dimensions, 3, index)
-```
-* Read endgame tablebases
-```python
-from tictactoe.egtb import Reader
 from tictactoe import Board
+from tictactoe.egtb import Tablebase
 
-reader = Reader((3, 3), 3, 2)
+tablebase = Tablebase((3, 3), 3)
 board = Board((3, 3), 3)
 board.push((0, 0))
 board.push((0, 1))
-print(reader.index(board))
+print(tablebase.result(board))  # 1: X wins with perfect play.
+print(tablebase.best_moves(board))  # The moves that keep the win.
+
+tablebase.save("3x3.npz")
+tablebase = Tablebase.load("3x3.npz")
 ```
+
+## Development
+
+Install the package with its development tools (needs pip 25.1 or newer), then run the tests, linters and docs build:
+
+    pip install -e . --group dev
+    pytest
+    ruff check . && ruff format --check .
+    mypy
+    sphinx-build -W -b html docs docs/_build/html
 
 ## License
 python-tictactoe is licensed under the MIT License. Check out LICENSE for the full text.
