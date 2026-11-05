@@ -5,6 +5,9 @@ on: [push, pull_request]
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Lets Codecov verify the upload with OIDC, so no CODECOV_TOKEN secret is needed.
     steps:
     - uses: actions/checkout@v7
     - name: Setup Python
@@ -20,4 +23,5 @@ jobs:
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v7
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        # Pull requests from forks can't get an OIDC token, but Codecov accepts their uploads without one.
+        use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
