@@ -31,7 +31,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/AttackingOrDefending/python-tictactoe"
-Documentation = "https://attackingordefending.github.io/python-tictactoe/"
+Documentation = "https://python-tictactoe.readthedocs.io/"
 Changelog = "https://github.com/AttackingOrDefending/python-tictactoe/blob/main/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/AttackingOrDefending/python-tictactoe/issues"
 

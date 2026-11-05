@@ -21,7 +21,7 @@
 
 - `Tablebase.best_moves()` returns every move that keeps the best result.
 - `Move` objects can be compared with `==`, hashed and printed.
-- Documentation at <https://attackingordefending.github.io/python-tictactoe/>.
+- Documentation at <https://python-tictactoe.readthedocs.io/>.
 
 ### Fixes
 

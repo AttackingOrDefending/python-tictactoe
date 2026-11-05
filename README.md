@@ -3,12 +3,12 @@
 [![Tests](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/tests.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/tests.yml)
 [![Build](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/build.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/build.yml)
 [![Mypy](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/mypy.yml/badge.svg)](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/mypy.yml)
-[![Docs](https://github.com/AttackingOrDefending/python-tictactoe/actions/workflows/docs.yml/badge.svg)](https://attackingordefending.github.io/python-tictactoe/)
+[![Read the Docs](https://img.shields.io/readthedocs/python-tictactoe)](https://python-tictactoe.readthedocs.io/en/latest/)
 [![codecov](https://codecov.io/gh/AttackingOrDefending/python-tictactoe/branch/main/graph/badge.svg?token=7N5LHRA3OC)](https://codecov.io/gh/AttackingOrDefending/python-tictactoe)
 
 A tic-tac-toe library that supports different sizes and dimensions and how many marks in a row to win.
 
-**Documentation:** <https://attackingordefending.github.io/python-tictactoe/>
+**Documentation:** <https://python-tictactoe.readthedocs.io/>
 
 Installing
 ----------
